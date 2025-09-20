@@ -20,7 +20,7 @@ struct ContentView: View {
             }
             
             NavigationStack {
-                FavoritesView(characters: $characters)
+                FavoritesGridView(characters: $characters)
             }
             .tabItem {
                 Label("Favorites", systemImage: "heart.fill")
