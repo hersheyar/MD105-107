@@ -1,3 +1,4 @@
+
 //
 //  CharacterFilters.swift
 //  MD105-107
@@ -36,6 +37,25 @@ struct CharacterFilters: Equatable {
             return character.alias.lowercased().contains(searchLower) ||
                    character.name.lowercased().contains(searchLower) ||
                    character.description.lowercased().contains(searchLower)
+        }
+        
+        return true
+    }
+    
+    func matchesPersistent(_ character: PersistentCharacter) -> Bool {
+        if showFavoritesOnly && !character.isFavorite {
+            return false
+        }
+        
+        if character.rating < minimumRating {
+            return false
+        }
+        
+        if !searchText.isEmpty {
+            let searchLower = searchText.lowercased()
+            return character.alias.lowercased().contains(searchLower) ||
+                   character.name.lowercased().contains(searchLower) ||
+                   character.characterDescription.lowercased().contains(searchLower)
         }
         
         return true

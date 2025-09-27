@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct FavoritesGridView: View {
-    @Binding var characters: [MarvelCharacter]
+    @Query private var allCharacters: [PersistentCharacter]
     @State private var isShowingFiltersView: Bool = false
     @State private var filters = CharacterFilters()
     
@@ -16,6 +17,16 @@ struct FavoritesGridView: View {
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
+    
+    private var favoriteCharacters: [PersistentCharacter] {
+        allCharacters.filter { $0.isFavorite }
+    }
+    
+    private var filteredFavorites: [PersistentCharacter] {
+        favoriteCharacters.filter { character in
+            filters.matchesPersistent(character)
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -27,37 +38,46 @@ struct FavoritesGridView: View {
                 )
                 .ignoresSafeArea(edges: [.leading, .trailing])
                 
-                let favorites = $characters.filter { $0.wrappedValue.isFavorite }
-                
-                if favorites.isEmpty {
+                if filteredFavorites.isEmpty {
                     VStack(spacing: 12) {
-                        Image(systemName: "heart.slash")
+                        Image(systemName: favoriteCharacters.isEmpty ? "heart.slash" : "magnifyingglass")
                             .font(.largeTitle)
                             .foregroundColor(.secondary)
-                        Text("No Favorites Yet").font(.headline)
-                        Text("Tap the heart in Characters to add them here.")
+                        Text(favoriteCharacters.isEmpty ? "No Favorites Yet" : "No Favorites Found")
+                            .font(.headline)
+                        Text(favoriteCharacters.isEmpty ?
+                             "Tap the heart in Characters to add them here." :
+                             "Try adjusting your filters to see more favorites.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        if filters.hasActiveFilters && !favoriteCharacters.isEmpty {
+                            Button("Clear Filters") {
+                                withAnimation {
+                                    filters.clearAll()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
                     }
                     .padding()
                 } else {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(favorites) { $character in
+                            ForEach(filteredFavorites, id: \.persistentModelID) { character in
+                                let marvelCharacter = convertToMarvelCharacter(character)
+                                
                                 NavigationLink {
-                                    CharacterDetailView(character: $character)
+                                    CharacterDetailView(character: .constant(marvelCharacter))
                                 } label: {
-                                    SquareCardView(character: $character)
-                                        .transition(.asymmetric(
-                                            insertion: .scale.combined(with: .opacity),
-                                            removal: .scale.combined(with: .opacity)
-                                        ))
+                                    SquareCardView(character: .constant(marvelCharacter))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                         .padding()
-                        .animation(.easeInOut, value: favorites.count)
                     }
                 }
             }
@@ -67,18 +87,9 @@ struct FavoritesGridView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { isShowingFiltersView = true }) {
-                    ZStack {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.title2)
-                            .accessibilityLabel("Filter favorites")
-                        
-                        if filters.hasActiveFilters {
-                            Circle()
-                                .fill(.red)
-                                .frame(width: 8, height: 8)
-                                .offset(x: 8, y: -8)
-                        }
-                    }
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.title2)
+                        .accessibilityLabel("Filter favorites")
                 }
             }
         }
@@ -86,8 +97,21 @@ struct FavoritesGridView: View {
             FilterView(filters: $filters)
         }
     }
+    
+    private func convertToMarvelCharacter(_ persistent: PersistentCharacter) -> MarvelCharacter {
+        MarvelCharacter(
+            name: persistent.name,
+            alias: persistent.alias,
+            description: persistent.characterDescription,
+            imageName: persistent.imageName,
+            rating: persistent.rating,
+            review: persistent.review,
+            isFavorite: persistent.isFavorite
+        )
+    }
 }
 
 #Preview {
-    FavoritesGridView(characters: .constant(MarvelCharacter.sample))
+    FavoritesGridView()
+        .modelContainer(for: [PersistentCharacter.self])
 }

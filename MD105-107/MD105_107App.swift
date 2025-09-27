@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct MD105_107App: App {
@@ -13,5 +14,6 @@ struct MD105_107App: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [PersistentCharacter.self])
     }
 }

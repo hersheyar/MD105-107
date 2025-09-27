@@ -6,30 +6,29 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CharacterListView: View {
-    @Binding var characters: [MarvelCharacter]
-    @State private var animate = false
+    @Query private var characters: [PersistentCharacter]
+    @Environment(\.modelContext) private var modelContext
     @State private var filters = CharacterFilters()
     @State private var isShowingFilters = false
     @State private var isShowingSettings = false
     @State private var listSettings = CharacterListSettings()
     
-    private var filteredCharacters: [MarvelCharacter] {
+    private var filteredCharacters: [PersistentCharacter] {
         characters.filter { character in
-            filters.matches(character)
+            filters.matchesPersistent(character)
         }
     }
     
-    private var filteredIndices: [Int] {
-        characters.indices.filter { index in
-            filters.matches(characters[index])
-        }
+    private var backgroundGradient: LinearGradient {
+        listSettings.backgroundColor.gradient
     }
 
     var body: some View {
         ZStack {
-            listSettings.backgroundColor.gradient
+            backgroundGradient
                 .ignoresSafeArea(edges: [.leading, .trailing])
 
             if filteredCharacters.isEmpty {
@@ -61,23 +60,17 @@ struct CharacterListView: View {
                 .padding()
             } else {
                 List {
-                    ForEach(filteredIndices, id: \.self) { i in
+                    ForEach(filteredCharacters, id: \.persistentModelID) { character in
+                        let marvelCharacter = convertToMarvelCharacter(character)
+                        
                         NavigationLink {
-                            CharacterDetailView(character: $characters[i])
+                            CharacterDetailView(character: .constant(marvelCharacter))
                         } label: {
-                            CharacterCard(character: $characters[i], showRating: listSettings.showRatings, textSize: listSettings.textSize)
+                            CharacterCard(character: .constant(marvelCharacter))
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 16)
                                         .fill(.ultraThinMaterial)
-                                        .shadow(radius: 4, y: 2)
-                                )
-                                .offset(x: animate ? 0 : -50)
-                                .opacity(animate ? 1 : 0)
-                                .animation(
-                                    .spring(response: 0.6, dampingFraction: 0.7)
-                                        .delay(Double(filteredIndices.firstIndex(of: i) ?? 0) * 0.05),
-                                    value: animate
                                 )
                         }
                         .listRowSeparator(.hidden)
@@ -90,7 +83,9 @@ struct CharacterListView: View {
                 .listStyle(.plain)
             }
         }
-        .onAppear { animate = true }
+        .onAppear {
+            addSampleDataIfNeeded()
+        }
         .navigationTitle("Marvel Characters")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -104,18 +99,9 @@ struct CharacterListView: View {
             
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { isShowingFilters = true }) {
-                    ZStack {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.title2)
-                            .accessibilityLabel("Filter characters")
-                        
-                        if filters.hasActiveFilters {
-                            Circle()
-                                .fill(.red)
-                                .frame(width: 8, height: 8)
-                                .offset(x: 8, y: -8)
-                        }
-                    }
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.title2)
+                        .accessibilityLabel("Filter characters")
                 }
             }
         }
@@ -125,10 +111,33 @@ struct CharacterListView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView(listSettings: $listSettings)
         }
-        .onChange(of: filters) { _, _ in
-            animate = false
-            withAnimation(.easeInOut(duration: 0.2)) {
-                animate = true
+    }
+    
+    private func convertToMarvelCharacter(_ persistent: PersistentCharacter) -> MarvelCharacter {
+        MarvelCharacter(
+            name: persistent.name,
+            alias: persistent.alias,
+            description: persistent.characterDescription,
+            imageName: persistent.imageName,
+            rating: persistent.rating,
+            review: persistent.review,
+            isFavorite: persistent.isFavorite
+        )
+    }
+    
+    private func addSampleDataIfNeeded() {
+        if characters.isEmpty {
+            for sampleCharacter in MarvelCharacter.sample {
+                let persistentCharacter = PersistentCharacter(
+                    name: sampleCharacter.name,
+                    alias: sampleCharacter.alias,
+                    characterDescription: sampleCharacter.description,
+                    imageName: sampleCharacter.imageName,
+                    rating: sampleCharacter.rating,
+                    review: sampleCharacter.review,
+                    isFavorite: sampleCharacter.isFavorite
+                )
+                modelContext.insert(persistentCharacter)
             }
         }
     }
@@ -136,6 +145,7 @@ struct CharacterListView: View {
 
 #Preview {
     NavigationStack {
-        CharacterListView(characters: .constant(MarvelCharacter.sample))
+        CharacterListView()
     }
+    .modelContainer(for: [PersistentCharacter.self])
 }

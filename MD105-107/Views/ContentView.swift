@@ -8,19 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var characters = MarvelCharacter.sample
     
     var body: some View {
         TabView {
             NavigationStack {
-                CharacterListView(characters: $characters)
+                CharacterListView()
             }
             .tabItem {
                 Label("Characters", systemImage: "person.3.fill")
             }
             
             NavigationStack {
-                FavoritesGridView(characters: $characters)
+                FavoritesGridView()
             }
             .tabItem {
                 Label("Favorites", systemImage: "heart.fill")
@@ -32,4 +31,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .modelContainer(for: [PersistentCharacter.self])
 }
