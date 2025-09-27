@@ -12,6 +12,8 @@ struct CharacterListView: View {
     @State private var animate = false
     @State private var filters = CharacterFilters()
     @State private var isShowingFilters = false
+    @State private var isShowingSettings = false
+    @State private var listSettings = CharacterListSettings()
     
     private var filteredCharacters: [MarvelCharacter] {
         characters.filter { character in
@@ -27,12 +29,8 @@ struct CharacterListView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [.black, .red.opacity(0.6)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea(edges: [.leading, .trailing])
+            listSettings.backgroundColor.gradient
+                .ignoresSafeArea(edges: [.leading, .trailing])
 
             if filteredCharacters.isEmpty {
                 VStack(spacing: 16) {
@@ -43,8 +41,8 @@ struct CharacterListView: View {
                     Text(filters.hasActiveFilters ? "No Characters Found" : "No Characters")
                         .font(.headline)
                     
-                    Text(filters.hasActiveFilters ? 
-                         "Try adjusting your filters to see more characters." : 
+                    Text(filters.hasActiveFilters ?
+                         "Try adjusting your filters to see more characters." :
                          "Add some characters to get started.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -67,7 +65,7 @@ struct CharacterListView: View {
                         NavigationLink {
                             CharacterDetailView(character: $characters[i])
                         } label: {
-                            CharacterCard(character: $characters[i])
+                            CharacterCard(character: $characters[i], showRating: listSettings.showRatings, textSize: listSettings.textSize)
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 16)
@@ -96,6 +94,14 @@ struct CharacterListView: View {
         .navigationTitle("Marvel Characters")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { isShowingSettings = true }) {
+                    Image(systemName: "gear")
+                        .font(.title2)
+                        .accessibilityLabel("Settings")
+                }
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { isShowingFilters = true }) {
                     ZStack {
@@ -115,6 +121,9 @@ struct CharacterListView: View {
         }
         .sheet(isPresented: $isShowingFilters) {
             FilterView(filters: $filters)
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView(listSettings: $listSettings)
         }
         .onChange(of: filters) { _, _ in
             animate = false

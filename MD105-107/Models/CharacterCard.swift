@@ -5,17 +5,12 @@
 //  Created by Andrew Hershey on 9/20/25.
 //
 
-//
-//  CharacterCard.swift
-//  MD105-107
-//
-//  Created by Andrew Hershey on 9/20/25.
-//
-
 import SwiftUI
 
 struct CharacterCard: View {
     @Binding var character: MarvelCharacter
+    var showRating: Bool = true
+    var textSize: CharacterListSettings.TextSize = .normal
     
     @State private var showGhost = false
     @State private var ghostScale: CGFloat = 1.0
@@ -33,14 +28,24 @@ struct CharacterCard: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 Text(character.alias)
-                    .font(.headline)
+                    .font(textSize.titleFont)
                 Text(character.name)
-                    .font(.subheadline)
+                    .font(textSize.bodyFont)
                     .foregroundColor(.secondary)
                 Text(character.description)
-                    .font(.footnote)
+                    .font(textSize.detailFont)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
+                
+                if showRating {
+                    HStack {
+                        ForEach(1...5, id: \.self) { star in
+                            Image(systemName: star <= character.rating ? "star.fill" : "star")
+                                .foregroundColor(star <= character.rating ? .yellow : .secondary)
+                                .font(.caption)
+                        }
+                    }
+                }
             }
             
             Spacer()
