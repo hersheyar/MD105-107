@@ -9,6 +9,8 @@ import SwiftUI
 
 struct FavoritesGridView: View {
     @Binding var characters: [MarvelCharacter]
+    @State private var isShowingFiltersView: Bool = false
+    @State private var filters = CharacterFilters()
     
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -61,6 +63,27 @@ struct FavoritesGridView: View {
             }
             .navigationTitle("Favorite Characters")
             .navigationBarTitleDisplayMode(.inline)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { isShowingFiltersView = true }) {
+                    ZStack {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.title2)
+                            .accessibilityLabel("Filter favorites")
+                        
+                        if filters.hasActiveFilters {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 8, height: 8)
+                                .offset(x: 8, y: -8)
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $isShowingFiltersView) {
+            FilterView(filters: $filters)
         }
     }
 }
