@@ -8,10 +8,51 @@
 import Testing
 @testable import MD105_107
 
-struct MD105_107Tests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+struct MarvelCharacterTests {
+    @Test func testCharacterInitialization() {
+        let hero = MarvelCharacter(
+            name: "Tony Stark",
+            alias: "Iron Man",
+            description: "Genius billionaire in powered armor.",
+            imageName: "ironman",
+            rating: 5,
+            review: "Smart and confident.",
+            isFavorite: true
+        )
+        
+        #expect(hero.name == "Tony Stark")
+        #expect(hero.alias == "Iron Man")
+        #expect(hero.rating == 5)
+        #expect(hero.isFavorite)
     }
+    
+    @Test func testToggleFavoriteStatus() {
+        var hero = MarvelCharacter.sample[0]
+        let originalFavorite = hero.isFavorite
+        hero.isFavorite.toggle()
+        #expect(hero.isFavorite != originalFavorite)
+    }
+    
+    @Test func testSampleCharactersLoaded() {
+        #expect(MarvelCharacter.sample.count > 0)
+        #expect(MarvelCharacter.sample.first?.alias == "Iron Man")
+    }
+}
 
+struct PersistentCharacterTests {
+    @Test func testPersistentCharacterInitialization() {
+        let persistent = PersistentCharacter(
+            name: "Steve Rogers",
+            alias: "Captain America",
+            characterDescription: "Super soldier and leader of the Avengers.",
+            imageName: "captain america",
+            rating: 5,
+            review: "Always inspiring.",
+            isFavorite: false
+        )
+        
+        #expect(persistent.alias == "Captain America")
+        #expect(persistent.rating == 5)
+        #expect(persistent.isFavorite == false)
+    }
 }
