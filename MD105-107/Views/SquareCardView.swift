@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SquareCardView: View {
-    @Binding var character: MarvelCharacter
+    @Bindable var character: PersistentCharacter
     
     @State private var showGhost = false
     @State private var ghostScale: CGFloat = 1.0
@@ -21,7 +21,6 @@ struct SquareCardView: View {
                 Image(character.imageName)
                     .resizable()
                     .scaledToFill()
-                    
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .shadow(radius: 4)
                 
@@ -95,6 +94,14 @@ struct SquareCardView: View {
 }
 
 #Preview("Square Card", traits: .sizeThatFitsLayout) {
-    SquareCardView(character: .constant(MarvelCharacter.sample[0]))
-        .padding()
+    SquareCardView(character: PersistentCharacter(
+        name: "Peter Parker",
+        alias: "Spider-Man",
+        characterDescription: "Friendly neighborhood hero with spider-powers.",
+        imageName: "spiderman",
+        rating: 5,
+        review: "Heart + humor.",
+        isFavorite: true
+    ))
+    .padding()
 }

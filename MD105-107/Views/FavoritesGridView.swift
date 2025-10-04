@@ -43,8 +43,10 @@ struct FavoritesGridView: View {
                         Image(systemName: favoriteCharacters.isEmpty ? "heart.slash" : "magnifyingglass")
                             .font(.largeTitle)
                             .foregroundColor(.secondary)
+                        
                         Text(favoriteCharacters.isEmpty ? "No Favorites Yet" : "No Favorites Found")
                             .font(.headline)
+                        
                         Text(favoriteCharacters.isEmpty ?
                              "Tap the heart in Characters to add them here." :
                              "Try adjusting your filters to see more favorites.")
@@ -66,13 +68,25 @@ struct FavoritesGridView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(filteredFavorites, id: \.persistentModelID) { character in
-                                let marvelCharacter = convertToMarvelCharacter(character)
-                                
+                            ForEach(filteredFavorites) { character in
+                                // ✅ Bind to the actual persistent character model
                                 NavigationLink {
-                                    CharacterDetailView(character: .constant(marvelCharacter))
+                                    CharacterDetailView(
+                                        character: .constant(
+                                            MarvelCharacter(
+                                                name: character.name,
+                                                alias: character.alias,
+                                                description: character.characterDescription,
+                                                imageName: character.imageName,
+                                                rating: character.rating,
+                                                review: character.review,
+                                                isFavorite: character.isFavorite
+                                            )
+                                        )
+                                    )
                                 } label: {
-                                    SquareCardView(character: .constant(marvelCharacter))
+                                    // ✅ Pass the actual SwiftData object for real-time updates
+                                    SquareCardView(character: character)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -83,31 +97,19 @@ struct FavoritesGridView: View {
             }
             .navigationTitle("Favorite Characters")
             .navigationBarTitleDisplayMode(.inline)
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { isShowingFiltersView = true }) {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                        .font(.title2)
-                        .accessibilityLabel("Filter favorites")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { isShowingFiltersView = true }) {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.title2)
+                            .accessibilityLabel("Filter favorites")
+                    }
                 }
             }
+            .sheet(isPresented: $isShowingFiltersView) {
+                FilterView(filters: $filters)
+            }
         }
-        .sheet(isPresented: $isShowingFiltersView) {
-            FilterView(filters: $filters)
-        }
-    }
-    
-    private func convertToMarvelCharacter(_ persistent: PersistentCharacter) -> MarvelCharacter {
-        MarvelCharacter(
-            name: persistent.name,
-            alias: persistent.alias,
-            description: persistent.characterDescription,
-            imageName: persistent.imageName,
-            rating: persistent.rating,
-            review: persistent.review,
-            isFavorite: persistent.isFavorite
-        )
     }
 }
 

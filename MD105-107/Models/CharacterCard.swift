@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct CharacterCard: View {
-    @Binding var character: MarvelCharacter
+    @Bindable var character: PersistentCharacter
     var showRating: Bool = true
     var textSize: CharacterListSettings.TextSize = .normal
-    
+
     @State private var showGhost = false
     @State private var ghostScale: CGFloat = 1.0
     @State private var ghostOffset: CGFloat = 0.0
     @State private var ghostOpacity: Double = 0.0
-    
+
     var body: some View {
         HStack(spacing: 16) {
             Image(character.imageName)
@@ -25,18 +25,18 @@ struct CharacterCard: View {
                 .frame(width: 60, height: 80)
                 .cornerRadius(8)
                 .shadow(radius: 3)
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(character.alias)
                     .font(textSize.titleFont)
                 Text(character.name)
                     .font(textSize.bodyFont)
                     .foregroundColor(.secondary)
-                Text(character.description)
+                Text(character.characterDescription)
                     .font(textSize.detailFont)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
-                
+
                 if showRating {
                     HStack {
                         ForEach(1...5, id: \.self) { star in
@@ -47,9 +47,9 @@ struct CharacterCard: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             ZStack {
                 if showGhost {
                     Image(systemName: "heart.fill")
@@ -60,21 +60,21 @@ struct CharacterCard: View {
                         .opacity(ghostOpacity)
                         .shadow(color: .red.opacity(0.6), radius: 6)
                 }
-                
+
                 Button {
                     character.isFavorite.toggle()
-                    
+
                     showGhost = true
                     ghostScale = 1.0
                     ghostOffset = 0
                     ghostOpacity = 1.0
-                    
+
                     withAnimation(.easeOut(duration: 0.4)) {
                         ghostScale = 1.8
                         ghostOffset = -80
                         ghostOpacity = 0
                     }
-                    
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         showGhost = false
                     }
@@ -95,6 +95,14 @@ struct CharacterCard: View {
 }
 
 #Preview("Card Preview", traits: .sizeThatFitsLayout) {
-    CharacterCard(character: .constant(MarvelCharacter.sample[0]))
+    CharacterCard(character: PersistentCharacter(
+        name: "Tony Stark",
+        alias: "Iron Man",
+        characterDescription: "Genius billionaire in powered armor.",
+        imageName: "Iron_man",
+        rating: 5,
+        review: "Snarky, brilliant, always fun.",
+        isFavorite: true
+    ))
         .padding()
 }

@@ -17,9 +17,7 @@ struct CharacterListView: View {
     @State private var listSettings = CharacterListSettings()
     
     private var filteredCharacters: [PersistentCharacter] {
-        characters.filter { character in
-            filters.matchesPersistent(character)
-        }
+        characters.filter { filters.matchesPersistent($0) }
     }
     
     private var backgroundGradient: LinearGradient {
@@ -49,9 +47,7 @@ struct CharacterListView: View {
                     
                     if filters.hasActiveFilters {
                         Button("Clear Filters") {
-                            withAnimation {
-                                filters.clearAll()
-                            }
+                            withAnimation { filters.clearAll() }
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
@@ -60,13 +56,21 @@ struct CharacterListView: View {
                 .padding()
             } else {
                 List {
-                    ForEach(filteredCharacters, id: \.persistentModelID) { character in
-                        let marvelCharacter = convertToMarvelCharacter(character)
-                        
+                    ForEach(filteredCharacters) { character in
                         NavigationLink {
-                            CharacterDetailView(character: .constant(marvelCharacter))
+                            CharacterDetailView(character: .constant(
+                                MarvelCharacter(
+                                    name: character.name,
+                                    alias: character.alias,
+                                    description: character.characterDescription,
+                                    imageName: character.imageName,
+                                    rating: character.rating,
+                                    review: character.review,
+                                    isFavorite: character.isFavorite
+                                )
+                            ))
                         } label: {
-                            CharacterCard(character: .constant(marvelCharacter))
+                            CharacterCard(character: character)
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 16)
@@ -83,9 +87,7 @@ struct CharacterListView: View {
                 .listStyle(.plain)
             }
         }
-        .onAppear {
-            addSampleDataIfNeeded()
-        }
+        .onAppear { addSampleDataIfNeeded() }
         .navigationTitle("Marvel Characters")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -113,31 +115,19 @@ struct CharacterListView: View {
         }
     }
     
-    private func convertToMarvelCharacter(_ persistent: PersistentCharacter) -> MarvelCharacter {
-        MarvelCharacter(
-            name: persistent.name,
-            alias: persistent.alias,
-            description: persistent.characterDescription,
-            imageName: persistent.imageName,
-            rating: persistent.rating,
-            review: persistent.review,
-            isFavorite: persistent.isFavorite
-        )
-    }
-    
     private func addSampleDataIfNeeded() {
         if characters.isEmpty {
-            for sampleCharacter in MarvelCharacter.sample {
-                let persistentCharacter = PersistentCharacter(
-                    name: sampleCharacter.name,
-                    alias: sampleCharacter.alias,
-                    characterDescription: sampleCharacter.description,
-                    imageName: sampleCharacter.imageName,
-                    rating: sampleCharacter.rating,
-                    review: sampleCharacter.review,
-                    isFavorite: sampleCharacter.isFavorite
+            for sample in MarvelCharacter.sample {
+                let new = PersistentCharacter(
+                    name: sample.name,
+                    alias: sample.alias,
+                    characterDescription: sample.description,
+                    imageName: sample.imageName,
+                    rating: sample.rating,
+                    review: sample.review,
+                    isFavorite: sample.isFavorite
                 )
-                modelContext.insert(persistentCharacter)
+                modelContext.insert(new)
             }
         }
     }
